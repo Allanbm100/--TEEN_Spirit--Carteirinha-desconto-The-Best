@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carteirinha Digital - Teen Spirit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        time: { dourado: '#f1af11', cinza: '#434343' }
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
+                            '50%': { 'background-size': '200% 200%', 'background-position': 'right center' },
+                        },
+                        'bounce-x': {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '50%': { transform: 'translateX(-20%)' },
+                        }
+                    },
+                    animation: { 
+                        'gradient-x': 'gradient-x 3s ease infinite',
+                        'bounce-x': 'bounce-x 1.5s infinite'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @keyframes textShine {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        .shine-text {
+            background: linear-gradient(90deg, #f1af11 0%, #ffffff 50%, #f1af11 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: textShine 2s linear infinite;
+        }
+
+        #cartaoContainer {
+            touch-action: pan-y;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-neutral-900 text-white min-h-screen flex flex-col items-center p-6 font-sans">
+
+    <!-- 1. TELA DE LOGIN -->
+    <div id="telaLogin" class="w-full max-w-sm mt-10 fade-in">
+        <h1 class="text-3xl font-bold text-center mb-2 text-time-dourado">Teen Spirit</h1>
+        <p class="text-center text-neutral-400 mb-6">Acesse sua carteirinha digital</p>
+        
+        <div class="bg-time-cinza p-6 rounded-2xl shadow-lg border border-neutral-600">
+            <form onsubmit="fazerLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-sm text-neutral-200 mb-2">E-mail cadastrado</label>
+                    <input type="email" id="inputEmail" required placeholder="seu.email@gmail.com" 
+                        class="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-500 text-white focus:outline-none focus:border-time-dourado transition-colors">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm text-neutral-200 mb-2">Senha / PIN</label>
+                    <input type="password" id="inputSenha" required placeholder="••••••" 
+                        class="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-500 text-white focus:outline-none focus:border-time-dourado transition-colors">
+                    <p class="text-xs text-neutral-400 mt-1">Primeiro acesso? Use a senha padrão: <strong>123456</strong></p>
+                </div>
+
+                <button type="submit" id="btnEntrar" class="w-full bg-time-dourado hover:bg-yellow-500 text-black font-bold py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    Entrar
+                </button>
+            </form>
+            <p id="msgErroLogin" class="text-red-400 text-sm text-center mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <!-- 2. TELA DE TROCA DE SENHA -->
+    <div id="telaTrocaSenha" class="w-full max-w-sm mt-10 hidden fade-in">
+        <h1 class="text-3xl font-bold text-center mb-2 text-time-dourado">Segurança</h1>
+        <p class="text-center text-neutral-400 mb-6">Cadastre sua nova senha (6 a 10 números)</p>
+        
+        <div class="bg-time-cinza p-6 rounded-2xl shadow-lg border border-neutral-600">
+            <form onsubmit="salvarNovaSenha(event)">
+                <div class="mb-4">
+                    <label class="block text-sm text-neutral-200 mb-2">Novo PIN (6 a 10 dígitos)</label>
+                    <input type="password" id="novaSenha" required pattern="[0-9]{6,10}" maxlength="10" placeholder="Ex: 852963" 
+                        class="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-500 text-white focus:outline-none focus:border-time-dourado">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm text-neutral-200 mb-2">Confirme o Novo PIN</label>
+                    <input type="password" id="confirmaSenha" required pattern="[0-9]{6,10}" maxlength="10" placeholder="Ex: 852963" 
+                        class="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-500 text-white focus:outline-none focus:border-time-dourado">
+                </div>
+
+                <button type="submit" id="btnSalvarSenha" class="w-full bg-time-dourado hover:bg-yellow-500 text-black font-bold py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    Salvar e Continuar
+                </button>
+            </form>
+            <p id="msgErroSenha" class="text-red-400 text-sm text-center mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <!-- 3. TELA DA CARTEIRINHA -->
+    <div id="telaCarteirinha" class="w-full max-w-sm mt-10 hidden fade-in">
+        <div class="bg-time-cinza p-6 rounded-3xl shadow-2xl border border-neutral-600 relative overflow-hidden">
+            <button onclick="fazerLogout()" class="text-neutral-300 hover:text-white mb-4 text-sm flex items-center transition-colors">← Sair</button>
+
+            <div class="flex flex-col items-center text-center">
+                <div class="w-32 h-32 rounded-full border-4 border-time-dourado overflow-hidden mb-4 bg-neutral-800 shadow-inner flex items-center justify-center">
+                    <img id="fotoPerfil" src="" alt="Foto do Atleta" class="w-full h-full object-cover object-center hidden" onload="this.classList.remove('hidden')">
+                </div>
+                <h2 id="nomeAtleta" class="text-2xl font-bold mb-1 text-white uppercase">Nome</h2>
+                <p class="text-time-dourado text-sm font-semibold tracking-widest uppercase">Atleta Oficial</p>
+            </div>
+
+            <div id="caixaStatus" class="mt-8">
+                <div id="estiloStatus" class="p-4 rounded-xl text-center bg-neutral-800 border border-neutral-600">
+                    <p id="textoStatus" class="text-lg font-bold text-white">Verificando...</p>
+                </div>
+            </div>
+
+            <button id="btnGerar" onclick="iniciarCronometro()" class="w-full mt-6 bg-time-dourado hover:bg-yellow-500 text-black font-bold py-4 rounded-xl text-lg transition-all shadow-lg hidden disabled:opacity-50">
+                GERAR TICKET
+            </button>
+
+            <!-- TICKET DESLIZÁVEL -->
+            <div id="cartaoVirtual" class="hidden mt-6 relative overflow-hidden rounded-2xl">
+                
+                <!-- Fundo de Confirmação -->
+                <div class="absolute inset-0 bg-time-dourado rounded-2xl flex justify-end z-0">
+                    <button id="btnConfirmarUso" onclick="confirmarUtilizacao()" class="w-32 h-full flex items-center justify-center hover:bg-yellow-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-r-2xl outline-none">
+                        <span id="textoConfirmar" class="text-time-cinza font-black text-xl tracking-widest uppercase" style="writing-mode: vertical-rl; transform: rotate(180deg);">
+                            Confirmar
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Cartão Principal que Desliza -->
+                <div id="cartaoContainer" class="w-full p-1 rounded-2xl bg-gradient-to-r from-time-dourado via-[#fff4d1] to-time-dourado animate-gradient-x shadow-2xl relative z-10 transition-transform"
+                     ontouchstart="iniciarToque(event)" ontouchmove="moverToque(event)" ontouchend="fimToque(event)"
+                     onmousedown="iniciarMouse(event)" onmousemove="moverMouse(event)" onmouseup="fimMouse(event)" onmouseleave="fimMouse(event)">
+                    
+                    <div id="mioloTicket" class="bg-time-cinza rounded-xl p-5 pb-8 text-center flex flex-col items-center relative overflow-hidden transition-colors duration-500">
+                        <p id="tituloTicket" class="text-time-dourado font-bold text-sm tracking-widest uppercase mb-2 transition-colors">TICKET VÁLIDO</p>
+                        
+                        <div id="caixaDataGeracao" class="bg-neutral-900 w-full rounded-lg p-3 mb-4 shadow-inner border border-neutral-700 transition-opacity">
+                            <p class="text-xs text-neutral-400 mb-1">Gerado em:</p>
+                            <p id="dataHoraGeracao" class="text-base font-mono font-bold tracking-tight shine-text">--/--/---- --:--:--</p>
+                        </div>
+                        
+                        <p id="lblExpira" class="text-neutral-300 text-xs mb-1 transition-opacity">Expira em</p>
+                        <div id="relogio" class="text-5xl font-black text-green-400 animate-pulse drop-shadow-lg mb-2 transition-all">00:30</div>
+
+                        <div id="indicadorDeslize" class="absolute bottom-2 inset-x-0 flex justify-center items-center text-time-dourado/70 text-[10px] uppercase font-bold tracking-widest animate-bounce-x pointer-events-none transition-opacity">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"></path></svg>
+                            Deslize para usar
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbymjSmWdvxYhTOloWMqFILohIt1toAlpOoS_sy475A8d7Olc9ld91q5G1S8DCxLRjo/exec";
+        
+        let tempoRestante = 30;
+        let intervalo;
+        let usuarioAtual = null;
+
+        function limparLinkFoto(linkRaw) {
+            if (!linkRaw) return "";
+            const match = String(linkRaw).match(/(https?:\/\/[^\s"\]\)]+)/);
+            return match ? match[1] : String(linkRaw).trim();
+        }
+
+        async function sha256(mensagem) {
+            const msgBuffer = new TextEncoder().encode(mensagem);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function obterDispositivo() {
+            return navigator.userAgent;
+        }
+
+        async function fazerLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById("inputEmail").value.trim();
+            const senhaPura = document.getElementById("inputSenha").value.trim();
+            const btnEntrar = document.getElementById("btnEntrar");
+            const msgErro = document.getElementById("msgErroLogin");
+
+            btnEntrar.innerText = "Verificando...";
+            btnEntrar.disabled = true;
+            msgErro.classList.add("hidden");
+
+            try {
+                const senhaHash = await sha256(senhaPura);
+                const dispositivo = obterDispositivo();
+
+                const resposta = await fetch(`${API_URL}?acao=login&email=${encodeURIComponent(email)}&senha=${senhaHash}&dispositivo=${encodeURIComponent(dispositivo)}`);
+                const dados = await resposta.json();
+
+                if (dados.erro) throw new Error(dados.erro);
+                usuarioAtual = dados;
+
+                if (dados.primeiro_acesso) {
+                    document.getElementById("telaLogin").classList.add("hidden");
+                    document.getElementById("telaTrocaSenha").classList.remove("hidden");
+                } else {
+                    carregarCarteirinha(dados);
+                }
+            } catch (e) {
+                msgErro.innerText = e.message || "Erro ao conectar com o servidor.";
+                msgErro.classList.remove("hidden");
+                btnEntrar.innerText = "Entrar";
+                btnEntrar.disabled = false;
+            }
+        }
+
+        async function salvarNovaSenha(event) {
+            event.preventDefault();
+            const nova = document.getElementById("novaSenha").value.trim();
+            const confirma = document.getElementById("confirmaSenha").value.trim();
+            const btnSalvar = document.getElementById("btnSalvarSenha");
+            const msgErro = document.getElementById("msgErroSenha");
+
+            if (nova.length < 6 || nova.length > 10) {
+                msgErro.innerText = "A senha deve ter entre 6 e 10 dígitos numéricos.";
+                msgErro.classList.remove("hidden");
+                return;
+            }
+            if (nova !== confirma) {
+                msgErro.innerText = "As senhas não coincidem.";
+                msgErro.classList.remove("hidden");
+                return;
+            }
+
+            btnSalvar.innerText = "Salvando aguarde...";
+            btnSalvar.disabled = true;
+            msgErro.classList.add("hidden");
+
+            try {
+                const novaSenhaHash = await sha256(nova);
+                const resposta = await fetch(`${API_URL}?acao=alterar_senha&email=${encodeURIComponent(usuarioAtual.email)}&nova_senha=${novaSenhaHash}`);
+                const dados = await resposta.json();
+
+                if (dados.erro) throw new Error(dados.erro);
+
+                // Feedback visual fluído sem alert()
+                btnSalvar.innerText = "Sucesso! Entrando...";
+                btnSalvar.classList.replace("bg-time-dourado", "bg-green-500");
+                
+                setTimeout(() => {
+                    document.getElementById("telaTrocaSenha").classList.add("hidden");
+                    carregarCarteirinha(usuarioAtual);
+                }, 1000);
+
+            } catch (e) {
+                msgErro.innerText = "Erro ao salvar nova senha.";
+                msgErro.classList.remove("hidden");
+                btnSalvar.innerText = "Salvar e Continuar";
+                btnSalvar.disabled = false;
+            }
+        }
+
+        function carregarCarteirinha(dados) {
+            document.getElementById("nomeAtleta").innerText = dados.apelido;
+            const fotoLimpa = limparLinkFoto(dados.foto);
+            document.getElementById("fotoPerfil").src = fotoLimpa || "https://i.ibb.co/rpxC7wK/placeholder.png";
+
+            const estiloStatus = document.getElementById("estiloStatus");
+            const textoStatus = document.getElementById("textoStatus");
+            const btnGerar = document.getElementById("btnGerar");
+
+            if (dados.status === "Permitido") {
+                estiloStatus.className = "p-4 rounded-xl text-center border bg-green-900/30 border-green-500";
+                textoStatus.className = "text-lg font-bold text-green-400";
+                textoStatus.innerText = "✓ DESCONTO LIBERADO";
+                btnGerar.classList.remove("hidden");
+            } else {
+                estiloStatus.className = "p-4 rounded-xl text-center border bg-red-900/30 border-red-500";
+                textoStatus.className = "text-lg font-bold text-red-400";
+                textoStatus.innerText = "🚫 MENSALIDADE PENDENTE";
+                btnGerar.classList.add("hidden");
+            }
+
+            // Reseta visual do ticket caso venha de um fluxo anterior
+            resetarVisualTicket();
+
+            document.getElementById("telaLogin").classList.add("hidden");
+            document.getElementById("telaCarteirinha").classList.remove("hidden");
+        }
+
+        function iniciarCronometro() {
+            document.getElementById("btnGerar").classList.add("hidden");
+            document.getElementById("caixaStatus").classList.add("hidden");
+            
+            const cartao = document.getElementById("cartaoVirtual");
+            cartao.classList.remove("hidden");
+            
+            const agora = new Date();
+            const data = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById("dataHoraGeracao").innerText = `${data} às ${hora}`;
+            
+            resetarVisualTicket();
+            
+            tempoRestante = 30;
+            
+            intervalo = setInterval(() => {
+                tempoRestante--;
+                let segundos = tempoRestante < 10 ? "0" + tempoRestante : tempoRestante;
+                document.getElementById("relogio").innerText = "00:" + segundos;
+
+                if (tempoRestante <= 0) {
+                    clearInterval(intervalo);
+                    document.getElementById("relogio").innerText = "EXPIRADO";
+                    document.getElementById("relogio").className = "text-4xl font-black text-red-500 drop-shadow-md";
+                    document.getElementById("tituloTicket").innerText = "TICKET EXPIRADO";
+                    document.getElementById("tituloTicket").className = "text-red-400 font-bold text-sm tracking-widest uppercase mb-2";
+                    document.getElementById("indicadorDeslize").classList.add("opacity-0");
+                    document.getElementById("btnConfirmarUso").disabled = true;
+                    document.getElementById("cartaoContainer").style.transform = `translateX(0px)`;
+                }
+            }, 1000);
+        }
+
+        async function confirmarUtilizacao() {
+            const btnConfirmar = document.getElementById("btnConfirmarUso");
+            const txtConfirmar = document.getElementById("textoConfirmar");
+            const cartaoContainer = document.getElementById("cartaoContainer");
+            
+            txtConfirmar.innerText = "SALVANDO";
+            btnConfirmar.disabled = true;
+
+            try {
+                const dispositivo = obterDispositivo();
+                const resposta = await fetch(`${API_URL}?acao=utilizar_ticket&apelido=${encodeURIComponent(usuarioAtual.apelido)}&dispositivo=${encodeURIComponent(dispositivo)}`);
+                const dados = await resposta.json();
+                
+                if(dados.erro) throw new Error(dados.erro);
+
+                // --- EFEITO VISUAL DE SUCESSO ---
+                clearInterval(intervalo); // Para o relógio
+                cartaoContainer.style.transform = `translateX(0px)`; // Recolhe o cartão
+                
+                document.getElementById("tituloTicket").innerText = "REGISTRO CONCLUÍDO";
+                document.getElementById("tituloTicket").className = "text-green-400 font-bold text-sm tracking-widest uppercase mb-2";
+                
+                document.getElementById("lblExpira").classList.add("hidden");
+                document.getElementById("caixaDataGeracao").classList.add("hidden");
+                document.getElementById("indicadorDeslize").classList.add("hidden");
+                
+                document.getElementById("relogio").innerText = "UTILIZADO ✓";
+                document.getElementById("relogio").className = "text-3xl font-black text-green-500 drop-shadow-lg mt-4";
+                
+                // Aguarda 3 segundos de leitura e sai sozinho
+                setTimeout(() => {
+                    fazerLogout();
+                }, 3000);
+
+            } catch (e) {
+                txtConfirmar.innerText = "ERRO!";
+                setTimeout(() => {
+                    txtConfirmar.innerText = "CONFIRMAR";
+                    btnConfirmar.disabled = false;
+                }, 2000);
+            }
+        }
+
+        function resetarVisualTicket() {
+            document.getElementById("cartaoContainer").style.transform = `translateX(0px)`;
+            document.getElementById("textoConfirmar").innerText = "Confirmar";
+            document.getElementById("btnConfirmarUso").disabled = false;
+            
+            document.getElementById("tituloTicket").innerText = "TICKET VÁLIDO";
+            document.getElementById("tituloTicket").className = "text-time-dourado font-bold text-sm tracking-widest uppercase mb-2";
+            
+            document.getElementById("relogio").innerText = "00:30";
+            document.getElementById("relogio").className = "text-5xl font-black text-green-400 animate-pulse drop-shadow-lg mb-2";
+            
+            document.getElementById("lblExpira").classList.remove("hidden");
+            document.getElementById("caixaDataGeracao").classList.remove("hidden");
+            document.getElementById("indicadorDeslize").classList.remove("hidden", "opacity-0");
+        }
+
+        function fazerLogout() {
+            clearInterval(intervalo);
+            usuarioAtual = null;
+            document.getElementById("fotoPerfil").classList.add("hidden");
+            document.getElementById("telaCarteirinha").classList.add("hidden");
+            document.getElementById("cartaoVirtual").classList.add("hidden");
+            document.getElementById("caixaStatus").classList.remove("hidden");
+            
+            // Restaura botão login
+            document.getElementById("btnEntrar").innerText = "Entrar";
+            document.getElementById("btnEntrar").disabled = false;
+            
+            // Restaura botão salvar
+            const btnSalvar = document.getElementById("btnSalvarSenha");
+            btnSalvar.innerText = "Salvar e Continuar";
+            btnSalvar.classList.replace("bg-green-500", "bg-time-dourado");
+            btnSalvar.disabled = false;
+
+            document.getElementById("telaLogin").classList.remove("hidden");
+            document.getElementById("inputEmail").value = "";
+            document.getElementById("inputSenha").value = "";
+            document.getElementById("novaSenha").value = "";
+            document.getElementById("confirmaSenha").value = "";
+        }
+
+        let inicioX = 0;
+        let deslocamentoX = 0;
+        let arrastando = false;
+
+        function iniciarToque(e) { inicioX = e.touches[0].clientX; arrastando = true; }
+        function moverToque(e) {
+            if (!arrastando) return;
+            let atualX = e.touches[0].clientX;
+            deslocamentoX = atualX - inicioX;
+            if (deslocamentoX < 0 && deslocamentoX > -120) {
+                document.getElementById("cartaoContainer").style.transform = `translateX(${deslocamentoX}px)`;
+            }
+        }
+        function fimToque() {
+            arrastando = false;
+            let container = document.getElementById("cartaoContainer");
+            if (deslocamentoX < -60) {
+                container.style.transform = `translateX(-120px)`;
+            } else {
+                container.style.transform = `translateX(0px)`;
+            }
+            deslocamentoX = 0;
+        }
+
+        function iniciarMouse(e) { inicioX = e.clientX; arrastando = true; }
+        function moverMouse(e) {
+            if (!arrastando) return;
+            let atualX = e.clientX;
+            deslocamentoX = atualX - inicioX;
+            if (deslocamentoX < 0 && deslocamentoX > -120) {
+                document.getElementById("cartaoContainer").style.transform = `translateX(${deslocamentoX}px)`;
+            }
+        }
+        function fimMouse() {
+            if (!arrastando) return;
+            arrastando = false;
+            let container = document.getElementById("cartaoContainer");
+            if (deslocamentoX < -60) {
+                container.style.transform = `translateX(-120px)`;
+            } else {
+                container.style.transform = `translateX(0px)`;
+            }
+            deslocamentoX = 0;
+        }
+    </script>
+</body>
+</html>
