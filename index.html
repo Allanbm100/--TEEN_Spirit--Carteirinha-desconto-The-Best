@@ -34,18 +34,6 @@
         .fade-in { animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        @keyframes textShine {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
-        }
-        .shine-text {
-            background: linear-gradient(90deg, #f1af11 0%, #ffffff 50%, #f1af11 100%);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: textShine 2s linear infinite;
-        }
-
         #cartaoContainer {
             touch-action: pan-y;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -68,7 +56,7 @@
 
                 <div class="mb-6">
                     <label class="block text-sm text-neutral-200 mb-2">Senha / PIN</label>
-                    <input type="password" id="inputSenha" required placeholder="••••••" 
+                    <input type="password" id="inputSenha" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required placeholder="••••••" 
                         class="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-500 text-white focus:outline-none focus:border-time-dourado transition-colors">
                     <p class="text-xs text-neutral-400 mt-1">Primeiro acesso? Use a senha padrão: <strong>123456</strong></p>
                 </div>
@@ -89,13 +77,13 @@
             <form onsubmit="salvarNovaSenha(event)">
                 <div class="mb-4">
                     <label class="block text-sm text-neutral-200 mb-2">Novo PIN (6 a 10 dígitos)</label>
-                    <input type="password" id="novaSenha" required pattern="[0-9]{6,10}" maxlength="10" placeholder="Ex: 852963" 
+                    <input type="password" id="novaSenha" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required pattern="[0-9]{6,10}" maxlength="10" placeholder="Ex: 852963" 
                         class="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-500 text-white focus:outline-none focus:border-time-dourado">
                 </div>
 
                 <div class="mb-6">
                     <label class="block text-sm text-neutral-200 mb-2">Confirme o Novo PIN</label>
-                    <input type="password" id="confirmaSenha" required pattern="[0-9]{6,10}" maxlength="10" placeholder="Ex: 852963" 
+                    <input type="password" id="confirmaSenha" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required pattern="[0-9]{6,10}" maxlength="10" placeholder="Ex: 852963" 
                         class="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-500 text-white focus:outline-none focus:border-time-dourado">
                 </div>
 
@@ -144,11 +132,11 @@
                      onmousedown="iniciarMouse(event)" onmousemove="moverMouse(event)" onmouseup="fimMouse(event)" onmouseleave="fimMouse(event)">
                     
                     <div id="mioloTicket" class="bg-time-cinza rounded-xl p-5 pb-8 text-center flex flex-col items-center relative overflow-hidden transition-colors duration-500">
-                        <p id="tituloTicket" class="text-time-dourado font-bold text-sm tracking-widest uppercase mb-2 transition-colors">TICKET VÁLIDO</p>
+                        <p id="tituloTicket" class="text-time-dourado font-bold text-sm tracking-widest uppercase mb-4 transition-colors">TICKET VÁLIDO</p>
                         
-                        <div id="caixaDataGeracao" class="bg-neutral-900 w-full rounded-lg p-3 mb-4 shadow-inner border border-neutral-700 transition-opacity">
-                            <p class="text-xs text-neutral-400 mb-1">Gerado em:</p>
-                            <p id="dataHoraGeracao" class="text-base font-mono font-bold tracking-tight shine-text">--/--/---- --:--:--</p>
+                        <div id="caixaDataUtilizacao" class="hidden bg-neutral-900 w-full rounded-lg p-3 mb-4 shadow-inner border border-neutral-700 transition-opacity">
+                            <p class="text-xs text-green-500 font-bold tracking-wider mb-1 uppercase">Utilizado em:</p>
+                            <p id="dataHoraUtilizacao" class="text-lg font-mono font-black tracking-tight text-white drop-shadow-md">--/--/---- --:--:--</p>
                         </div>
                         
                         <p id="lblExpira" class="text-neutral-300 text-xs mb-1 transition-opacity">Expira em</p>
@@ -298,17 +286,9 @@
         function iniciarCronometro() {
             document.getElementById("btnGerar").classList.add("hidden");
             document.getElementById("caixaStatus").classList.add("hidden");
-            
-            const cartao = document.getElementById("cartaoVirtual");
-            cartao.classList.remove("hidden");
-            
-            const agora = new Date();
-            const data = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            document.getElementById("dataHoraGeracao").innerText = `${data} às ${hora}`;
+            document.getElementById("cartaoVirtual").classList.remove("hidden");
             
             resetarVisualTicket();
-            
             tempoRestante = 30;
             
             intervalo = setInterval(() => {
@@ -319,9 +299,9 @@
                 if (tempoRestante <= 0) {
                     clearInterval(intervalo);
                     document.getElementById("relogio").innerText = "EXPIRADO";
-                    document.getElementById("relogio").className = "text-4xl font-black text-red-500 drop-shadow-md";
+                    document.getElementById("relogio").className = "text-4xl font-black text-red-500 drop-shadow-md mb-2";
                     document.getElementById("tituloTicket").innerText = "TICKET EXPIRADO";
-                    document.getElementById("tituloTicket").className = "text-red-400 font-bold text-sm tracking-widest uppercase mb-2";
+                    document.getElementById("tituloTicket").className = "text-red-400 font-bold text-sm tracking-widest uppercase mb-4 transition-colors";
                     document.getElementById("indicadorDeslize").classList.add("opacity-0");
                     document.getElementById("btnConfirmarUso").disabled = true;
                     document.getElementById("cartaoContainer").style.transform = `translateX(0px)`;
@@ -348,18 +328,24 @@
                 cartaoContainer.style.transform = `translateX(0px)`;
                 
                 document.getElementById("tituloTicket").innerText = "REGISTRO CONCLUÍDO";
-                document.getElementById("tituloTicket").className = "text-green-400 font-bold text-sm tracking-widest uppercase mb-2";
+                document.getElementById("tituloTicket").className = "text-green-400 font-bold text-sm tracking-widest uppercase mb-4 transition-colors";
+                
+                const dataConfirmacao = new Date();
+                const dataStr = dataConfirmacao.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const horaStr = dataConfirmacao.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                document.getElementById("dataHoraUtilizacao").innerText = `${dataStr} às ${horaStr}`;
+                document.getElementById("caixaDataUtilizacao").classList.remove("hidden");
                 
                 document.getElementById("lblExpira").classList.add("hidden");
-                document.getElementById("caixaDataGeracao").classList.add("hidden");
                 document.getElementById("indicadorDeslize").classList.add("hidden");
                 
                 document.getElementById("relogio").innerText = "UTILIZADO ✓";
-                document.getElementById("relogio").className = "text-3xl font-black text-green-500 drop-shadow-lg mt-4";
+                document.getElementById("relogio").className = "text-3xl font-black text-green-500 drop-shadow-lg mt-2 transition-all";
                 
                 setTimeout(() => {
                     fazerLogout();
-                }, 3000);
+                }, 5000);
 
             } catch (e) {
                 txtConfirmar.innerText = "ERRO!";
@@ -376,13 +362,14 @@
             document.getElementById("btnConfirmarUso").disabled = false;
             
             document.getElementById("tituloTicket").innerText = "TICKET VÁLIDO";
-            document.getElementById("tituloTicket").className = "text-time-dourado font-bold text-sm tracking-widest uppercase mb-2";
+            document.getElementById("tituloTicket").className = "text-time-dourado font-bold text-sm tracking-widest uppercase mb-4 transition-colors";
+            
+            document.getElementById("caixaDataUtilizacao").classList.add("hidden");
             
             document.getElementById("relogio").innerText = "00:30";
-            document.getElementById("relogio").className = "text-5xl font-black text-green-400 animate-pulse drop-shadow-lg mb-2";
+            document.getElementById("relogio").className = "text-5xl font-black text-green-400 animate-pulse drop-shadow-lg mb-2 transition-all";
             
             document.getElementById("lblExpira").classList.remove("hidden");
-            document.getElementById("caixaDataGeracao").classList.remove("hidden");
             document.getElementById("indicadorDeslize").classList.remove("hidden", "opacity-0");
         }
 
