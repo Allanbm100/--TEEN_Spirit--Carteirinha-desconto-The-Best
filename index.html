@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carteirinha Digital - Teen Spirit</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Importando o cliente do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -153,8 +155,11 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwgx3YUq2wGiTuby-nGLsmxP4HLWXedQ350HJH7Q71aOJHl7EUOvCy96F_E4sAv0G0o/exec";
+        const SUPABASE_URL = "https://uvxsyzkgjshnzdunurck.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_m3-nmKdkzw6crXqU6ZWKwQ_GYbRe8iC";
         
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         let tempoRestante = 30;
         let intervalo;
         let usuarioAtual = null;
@@ -178,7 +183,7 @@
 
         async function fazerLogin(event) {
             event.preventDefault();
-            const email = document.getElementById("inputEmail").value.trim();
+            const email = document.getElementById("inputEmail").value.trim().toLowerCase();
             const senhaPura = document.getElementById("inputSenha").value.trim();
             const btnEntrar = document.getElementById("btnEntrar");
             const msgErro = document.getElementById("msgErroLogin");
@@ -189,19 +194,51 @@
 
             try {
                 const senhaHash = await sha256(senhaPura);
-                const dispositivo = obterDispositivo();
 
-                const resposta = await fetch(`${API_URL}?acao=login&email=${encodeURIComponent(email)}&senha=${senhaHash}&dispositivo=${encodeURIComponent(dispositivo)}`);
-                const dados = await resposta.json();
+                const { data: atletas, error } = await supabaseClient
+                    .from('atletas')
+                    .select('*')
+                    .eq('email_atleta', email)
+                    .limit(1);
 
-                if (dados.erro) throw new Error(dados.erro);
-                usuarioAtual = dados;
+                if (error || !atletas || atletas.length === 0) {
+                    throw new Error("E-mail não encontrado ou não cadastrado.");
+                }
 
-                if (dados.primeiro_acesso) {
+                const atleta = atletas[0];
+
+                const senhaCadastrada = atleta.senha_hash ? atleta.senha_hash : await sha256("123456");
+                if (senhaCadastrada !== senhaHash) {
+                    throw new Error("Senha incorreta.");
+                }
+
+                const mesAtual = "Agosto/2026";
+                const { data: pagamentos } = await supabaseClient
+                    .from('pagamentos')
+                    .select('*')
+                    .eq('apelido_atleta', atleta.apelido_atleta)
+                    .eq('mes_referencia', mesAtual)
+                    .limit(1);
+
+                let statusPagamento = "Pendente";
+                if (pagamentos && pagamentos.length > 0 && pagamentos[0].estado_pagamento === "Pago") {
+                    statusPagamento = "Permitido";
+                }
+
+                usuarioAtual = {
+                    nome: atleta.nome_atleta,
+                    apelido: atleta.apelido_atleta,
+                    email: atleta.email_atleta,
+                    foto: atleta.foto_atleta,
+                    status: statusPagamento,
+                    primeiroAcesso: (!atleta.senha_hash || atleta.primeiro_acesso === "SIM")
+                };
+
+                if (usuarioAtual.primeiroAcesso) {
                     document.getElementById("telaLogin").classList.add("hidden");
                     document.getElementById("telaTrocaSenha").classList.remove("hidden");
                 } else {
-                    carregarCarteirinha(dados);
+                    carregarCarteirinha(usuarioAtual);
                 }
             } catch (e) {
                 msgErro.innerText = e.message || "Erro ao conectar com o servidor.";
@@ -229,16 +266,19 @@
                 return;
             }
 
-            btnSalvar.innerText = "Salvando aguarde...";
+            btnSalvar.innerText = "Salvando...";
             btnSalvar.disabled = true;
             msgErro.classList.add("hidden");
 
             try {
                 const novaSenhaHash = await sha256(nova);
-                const resposta = await fetch(`${API_URL}?acao=alterar_senha&email=${encodeURIComponent(usuarioAtual.email)}&nova_senha=${novaSenhaHash}`);
-                const dados = await resposta.json();
 
-                if (dados.erro) throw new Error(dados.erro);
+                const { error } = await supabaseClient
+                    .from('atletas')
+                    .update({ senha_hash: novaSenhaHash, primeiro_acesso: 'NAO' })
+                    .eq('email_atleta', usuarioAtual.email);
+
+                if (error) throw error;
 
                 btnSalvar.innerText = "Sucesso! Entrando...";
                 btnSalvar.classList.replace("bg-time-dourado", "bg-green-500");
@@ -319,10 +359,19 @@
 
             try {
                 const dispositivo = obterDispositivo();
-                const resposta = await fetch(`${API_URL}?acao=utilizar_ticket&apelido=${encodeURIComponent(usuarioAtual.apelido)}&dispositivo=${encodeURIComponent(dispositivo)}`);
-                const dados = await resposta.json();
-                
-                if(dados.erro) throw new Error(dados.erro);
+                const agora = new Date().toISOString();
+
+                const { error } = await supabaseClient
+                    .from('logs')
+                    .insert([{
+                        data_hora: agora,
+                        apelido_atleta: usuarioAtual.apelido,
+                        email_atleta: usuarioAtual.email,
+                        dispositivo_atleta: dispositivo,
+                        tipo: 'Uso de Ticket'
+                    }]);
+
+                if (error) throw error;
 
                 clearInterval(intervalo);
                 cartaoContainer.style.transform = `translateX(0px)`;
