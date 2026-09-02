@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carteirinha Digital - Teen Spirit</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Importando o cliente do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = {
@@ -233,6 +232,25 @@
                     status: statusPagamento,
                     primeiroAcesso: (!atleta.senha_hash || atleta.primeiro_acesso === "SIM")
                 };
+
+                try {
+                    await supabaseClient.from('logs').insert([{
+                        data_hora: new Date().toISOString(),
+                        apelido_atleta: atleta.apelido_atleta,
+                        email_atleta: atleta.email_atleta,
+                        dispositivo_atleta: obterDispositivo(),
+                        tipo: 'Login no App'
+                    }]);
+                } catch (err) {
+                    console.error("Erro ao registrar log de login:", err);
+                }
+
+                if (usuarioAtual.primeiroAcesso) {
+                    document.getElementById("telaLogin").classList.add("hidden");
+                    document.getElementById("telaTrocaSenha").classList.remove("hidden");
+                } else {
+                    carregarCarteirinha(usuarioAtual);
+                }
 
                 if (usuarioAtual.primeiroAcesso) {
                     document.getElementById("telaLogin").classList.add("hidden");
