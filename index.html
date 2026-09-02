@@ -233,21 +233,16 @@
                     primeiroAcesso: (!atleta.senha_hash || atleta.primeiro_acesso === "SIM")
                 };
 
-                supabaseClient.from('logs').insert([{
-                    data_hora: new Date().toISOString(),
-                    apelido_atleta: atleta.apelido_atleta,
-                    email_atleta: atleta.email_atleta,
-                    dispositivo_atleta: obterDispositivo(),
-                    tipo: 'Login no App'
-                }]).then(({ error }) => {
-                    if (error) console.error("Erro no log de login:", error.message);
-                });
-
-                if (usuarioAtual.primeiroAcesso) {
-                    document.getElementById("telaLogin").classList.add("hidden");
-                    document.getElementById("telaTrocaSenha").classList.remove("hidden");
-                } else {
-                    carregarCarteirinha(usuarioAtual);
+                try {
+                    await supabaseClient.from('logs').insert([{
+                        data_hora: new Date().toISOString(),
+                        apelido_atleta: atleta.apelido_atleta,
+                        email_atleta: atleta.email_atleta,
+                        dispositivo_atleta: obterDispositivo(),
+                        tipo: 'Login no App'
+                    }]);
+                } catch (logErr) {
+                    console.error("Erro ao registrar log de login:", logErr);
                 }
 
                 if (usuarioAtual.primeiroAcesso) {
