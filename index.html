@@ -206,6 +206,10 @@
 
                 const atleta = atletas[0];
 
+                if (!atleta.foto_atleta || String(atleta.foto_atleta).trim() === "") {
+                    throw new Error("Acesso negado: Foto de perfil ausente. Contate a administração.");
+                }
+
                 const senhaCadastrada = atleta.senha_hash ? atleta.senha_hash : await sha256("123456");
                 if (senhaCadastrada !== senhaHash) {
                     throw new Error("Senha incorreta.");
