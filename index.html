@@ -233,16 +233,16 @@
                     primeiroAcesso: (!atleta.senha_hash || atleta.primeiro_acesso === "SIM")
                 };
 
-                try {
-                    await supabaseClient.from('logs').insert([{
-                        data_hora: new Date().toISOString(),
-                        apelido_atleta: atleta.apelido_atleta,
-                        email_atleta: atleta.email_atleta,
-                        dispositivo_atleta: obterDispositivo(),
-                        tipo: 'Login no App'
-                    }]);
-                } catch (logErr) {
-                    console.error("Erro ao registrar log de login:", logErr);
+                const { error: logErr } = await supabaseClient.from('logs').insert([{
+                    data_hora: new Date().toISOString(),
+                    apelido_atleta: atleta.apelido_atleta,
+                    email_atleta: atleta.email_atleta,
+                    dispositivo_atleta: obterDispositivo(),
+                    tipo: 'Login no App'
+                }]);
+
+                if (logErr) {
+                    throw new Error("Erro de log: " + logErr.message);
                 }
 
                 if (usuarioAtual.primeiroAcesso) {
