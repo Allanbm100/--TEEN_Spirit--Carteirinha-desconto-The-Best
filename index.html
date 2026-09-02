@@ -54,7 +54,6 @@
 </head>
 <body class="bg-neutral-900 text-white min-h-screen flex flex-col items-center p-6 font-sans">
 
-    <!-- 1. TELA DE LOGIN -->
     <div id="telaLogin" class="w-full max-w-sm mt-10 fade-in">
         <h1 class="text-3xl font-bold text-center mb-2 text-time-dourado">Teen Spirit</h1>
         <p class="text-center text-neutral-400 mb-6">Acesse sua carteirinha digital</p>
@@ -82,7 +81,6 @@
         </div>
     </div>
 
-    <!-- 2. TELA DE TROCA DE SENHA -->
     <div id="telaTrocaSenha" class="w-full max-w-sm mt-10 hidden fade-in">
         <h1 class="text-3xl font-bold text-center mb-2 text-time-dourado">Segurança</h1>
         <p class="text-center text-neutral-400 mb-6">Cadastre sua nova senha (6 a 10 números)</p>
@@ -109,7 +107,6 @@
         </div>
     </div>
 
-    <!-- 3. TELA DA CARTEIRINHA -->
     <div id="telaCarteirinha" class="w-full max-w-sm mt-10 hidden fade-in">
         <div class="bg-time-cinza p-6 rounded-3xl shadow-2xl border border-neutral-600 relative overflow-hidden">
             <button onclick="fazerLogout()" class="text-neutral-300 hover:text-white mb-4 text-sm flex items-center transition-colors">← Sair</button>
@@ -132,10 +129,8 @@
                 GERAR TICKET
             </button>
 
-            <!-- TICKET DESLIZÁVEL -->
             <div id="cartaoVirtual" class="hidden mt-6 relative overflow-hidden rounded-2xl">
                 
-                <!-- Fundo de Confirmação -->
                 <div class="absolute inset-0 bg-time-dourado rounded-2xl flex justify-end z-0">
                     <button id="btnConfirmarUso" onclick="confirmarUtilizacao()" class="w-32 h-full flex items-center justify-center hover:bg-yellow-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-r-2xl outline-none">
                         <span id="textoConfirmar" class="text-time-cinza font-black text-xl tracking-widest uppercase" style="writing-mode: vertical-rl; transform: rotate(180deg);">
@@ -144,7 +139,6 @@
                     </button>
                 </div>
 
-                <!-- Cartão Principal que Desliza -->
                 <div id="cartaoContainer" class="w-full p-1 rounded-2xl bg-gradient-to-r from-time-dourado via-[#fff4d1] to-time-dourado animate-gradient-x shadow-2xl relative z-10 transition-transform"
                      ontouchstart="iniciarToque(event)" ontouchmove="moverToque(event)" ontouchend="fimToque(event)"
                      onmousedown="iniciarMouse(event)" onmousemove="moverMouse(event)" onmouseup="fimMouse(event)" onmouseleave="fimMouse(event)">
@@ -171,7 +165,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbymjSmWdvxYhTOloWMqFILohIt1toAlpOoS_sy475A8d7Olc9ld91q5G1S8DCxLRjo/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycby9ZGWF1S3bVCCE-8k0aFONMdv6l01O8ztagQ_VZGCbH1dks6YQiY_8g3aDSz3B0YFH/exec";
         
         let tempoRestante = 30;
         let intervalo;
@@ -258,7 +252,6 @@
 
                 if (dados.erro) throw new Error(dados.erro);
 
-                // Feedback visual fluído sem alert()
                 btnSalvar.innerText = "Sucesso! Entrando...";
                 btnSalvar.classList.replace("bg-time-dourado", "bg-green-500");
                 
@@ -296,7 +289,6 @@
                 btnGerar.classList.add("hidden");
             }
 
-            // Reseta visual do ticket caso venha de um fluxo anterior
             resetarVisualTicket();
 
             document.getElementById("telaLogin").classList.add("hidden");
@@ -352,9 +344,8 @@
                 
                 if(dados.erro) throw new Error(dados.erro);
 
-                // --- EFEITO VISUAL DE SUCESSO ---
-                clearInterval(intervalo); // Para o relógio
-                cartaoContainer.style.transform = `translateX(0px)`; // Recolhe o cartão
+                clearInterval(intervalo);
+                cartaoContainer.style.transform = `translateX(0px)`;
                 
                 document.getElementById("tituloTicket").innerText = "REGISTRO CONCLUÍDO";
                 document.getElementById("tituloTicket").className = "text-green-400 font-bold text-sm tracking-widest uppercase mb-2";
@@ -366,7 +357,6 @@
                 document.getElementById("relogio").innerText = "UTILIZADO ✓";
                 document.getElementById("relogio").className = "text-3xl font-black text-green-500 drop-shadow-lg mt-4";
                 
-                // Aguarda 3 segundos de leitura e sai sozinho
                 setTimeout(() => {
                     fazerLogout();
                 }, 3000);
@@ -404,11 +394,9 @@
             document.getElementById("cartaoVirtual").classList.add("hidden");
             document.getElementById("caixaStatus").classList.remove("hidden");
             
-            // Restaura botão login
             document.getElementById("btnEntrar").innerText = "Entrar";
             document.getElementById("btnEntrar").disabled = false;
             
-            // Restaura botão salvar
             const btnSalvar = document.getElementById("btnSalvarSenha");
             btnSalvar.innerText = "Salvar e Continuar";
             btnSalvar.classList.replace("bg-green-500", "bg-time-dourado");
